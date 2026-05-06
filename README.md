@@ -74,12 +74,23 @@ Typical workflow:
 
 ```bash
 ./install.sh
+.venv/bin/python3 mtga_export_gui.py
+```
+
+`install.sh` creates a local `.venv/` (required on modern macOS/Linux because
+the system Python refuses pip installs — PEP 668) and installs `requests` into
+it. To launch later, either run the GUI through the venv's Python directly as
+above, or activate the venv first:
+
+```bash
+source .venv/bin/activate
 python3 mtga_export_gui.py
 ```
 
-If `tkinter` is missing (common with Homebrew Python), install it first:
+If `tkinter` is missing (common with Homebrew Python), install it first and
+re-run `./install.sh`:
 - macOS: `brew install python-tk`
-- Debian/Ubuntu: `sudo apt install python3-tk`
+- Debian/Ubuntu: `sudo apt install python3-tk python3-venv`
 
 ### Windows
 
