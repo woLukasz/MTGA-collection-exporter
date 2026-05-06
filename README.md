@@ -59,27 +59,75 @@ It outputs two files:
 
 ## Filter & re-export by color (cross-platform GUI)
 
-`mtga_export_gui.py` is a small Tkinter app that loads an existing
-`mtga_collection.json` and lets you tick which colors (W/U/B/R/G/Colorless) to
-include before re-exporting to TXT, JSON, or Moxfield-style CSV. It runs on
-**macOS, Linux, and Windows** — only `mtg.py` itself is Windows-only (it scans
-the live MTGA process via `pymem`, and MTG Arena has no native Mac client).
+`mtga_export_gui.py` is a small Tkinter app that loads or generates an
+`mtga_collection.json`, lets you tick which colors (W/U/B/R/G/Colorless) to
+include, and re-exports to TXT, JSON, or Moxfield-style CSV. It runs on
+**macOS, Linux, and Windows**.
 
-Typical workflow:
-1. On Windows, run `mtg.py` once to produce `mtga_collection.json`.
-2. Copy that JSON to wherever you want to work (Mac, Linux, Windows).
-3. Launch the GUI and pick which colors to export.
+Two ways to feed it your collection:
+
+1. **Load collection (JSON)…** — point it at an `mtga_collection.json`
+   produced by `mtg.py` on Windows. Best when you already have one or are
+   running both tools on the same Windows box.
+2. **Import from MTGA log…** — point it at MTGA's `Player.log`. The GUI parses
+   the most recent inventory snapshot, fetches arena-id → name/set/colors
+   from Scryfall (cached), and writes a fresh `mtga_collection.json` for you.
+   This is the path to use on a Mac.
+
+### Producing the log on macOS (no Windows machine needed)
+
+MTG Arena has no native Mac client, but it runs through Wine-based wrappers.
+Any of these work — install MTGA inside one and sign in once so the
+collection syncs and the log file is created:
+
+| Wrapper | Cost | Apple Silicon | Notes |
+| --- | --- | --- | --- |
+| [Whisky](https://getwhisky.app/) | Free | ✓ | Easiest free option. |
+| [CrossOver](https://www.codeweavers.com/crossover) | Paid (free trial) | ✓ | Most polished commercial Wine. |
+| Parallels / UTM + Windows | Paid / free | ✓ | Heavier, but works. |
+
+Once MTGA is running, open the **Decks** or **Collection** tab and scroll for
+~30 seconds so the inventory loads, then quit MTGA and click
+**Import from MTGA log…** in the GUI. Common Player.log locations are
+auto-detected:
+
+- Whisky:  `~/Library/Containers/com.isaacmarovitz.Whisky/Bottles/<id>/drive_c/users/crossover/AppData/LocalLow/Wizards Of The Coast/MTGA/Player.log`
+- CrossOver: `~/Library/Application Support/CrossOver/Bottles/<bottle>/drive_c/users/crossover/AppData/LocalLow/Wizards Of The Coast/MTGA/Player.log`
+- Wineskin app: `/Applications/MTG Arena.app/Contents/Resources/drive_c/users/<user>/AppData/LocalLow/Wizards Of The Coast/MTGA/Player.log`
+- Plain Wine: `~/.wine/drive_c/users/<user>/AppData/LocalLow/Wizards Of The Coast/MTGA/Player.log`
+
+If the log lives somewhere else, the file picker lets you point at it
+manually.
+
+### Workflow summary
+
+- **On a Windows PC:** run `mtg.py` (or `MTGA_Exporter.exe`) → produces
+  `mtga_collection.json` → optionally use the GUI to filter by color.
+- **On a Mac (or Linux):** install MTGA via Whisky/CrossOver, sign in, scroll
+  the collection, quit, then in the GUI click *Import from MTGA log…* →
+  filter and export.
 
 ### macOS / Linux setup
 
 ```bash
 ./install.sh
+.venv/bin/python3 mtga_export_gui.py
+```
+
+`install.sh` creates a local `.venv/` (required on modern macOS/Linux because
+the system Python refuses pip installs — PEP 668) and installs `requests` into
+it. To launch later, either run the GUI through the venv's Python directly as
+above, or activate the venv first:
+
+```bash
+source .venv/bin/activate
 python3 mtga_export_gui.py
 ```
 
-If `tkinter` is missing (common with Homebrew Python), install it first:
+If `tkinter` is missing (common with Homebrew Python), install it first and
+re-run `./install.sh`:
 - macOS: `brew install python-tk`
-- Debian/Ubuntu: `sudo apt install python3-tk`
+- Debian/Ubuntu: `sudo apt install python3-tk python3-venv`
 
 ### Windows
 
@@ -100,7 +148,8 @@ python mtga_export_gui.py
   Azorius cards.
 
 Color data is fetched once from Scryfall's bulk catalog and cached in
-`color_cache.json`, so subsequent filters are instant.
+`color_cache.json`; arena-id → card resolution (used by the log importer) is
+cached in `arena_id_cache.json`. Both make subsequent runs instant.
 
 ## Files
 - `MTGA_Exporter.exe`: The standalone Windows application.
